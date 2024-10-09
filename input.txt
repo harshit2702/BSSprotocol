@@ -1,0 +1,8 @@
+3
+begin process p0
+send m0
+end process
+begin process p1
+send m1
+end process
+exit
