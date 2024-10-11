@@ -29,7 +29,8 @@ bool checkBSSRule(const vector<int>& msgTime, const vector<int>& recieverTime, i
     return false;
 }
 
-void recievetransaction(string str, vector<vector<int>>& time, vector<vector<messages2>>& transaction, vector<vector<string>>& buffer, int n, int processid){
+void recievetransaction(string str, vector<vector<int>>& time, vector<vector<messages2>>& transaction, vector<vector<string>>& buffer, int n, int& processid, vector<vector<string>>& output){
+    cout<<"Recieved Transaction "<<str<<endl;
     int recievedFrom = stoi(str.substr(8)); // Extract the process number
     string msg = str.substr(10,str.size()-1);
     vector<int> recieverTime = time[processid];
@@ -49,29 +50,34 @@ void recievetransaction(string str, vector<vector<int>>& time, vector<vector<mes
 
             if(recievedFrom == msgsender){
                 if(msgReceived[processid] == false){
-                    cout<<str;
-                    cout<<" (";
+                    string temp = str;
+                    temp += " (";
                     for (int i = 0; i < n; i++) {
-                        cout<<to_string(time[processid][i]);
+                        temp += to_string(time[processid][i]);
                     }
-                    cout<<")"<<endl; 
+                    temp += ")";
+                    output[processid].push_back(temp);
                 }
                 msgReceived[processid] = true;
                 trans.msgReceived = msgReceived;
                 if(checkBSSRule(msgTime,recieverTime, msgsender)){
                     time[processid][msgsender] += 1;
                     msgReceived[processid] = true;
-                    cout <<"recv_A p" << msgsender << " " << msg << " (";
+                    string temp = "recv_A p" + to_string(msgsender) + " " + msg + " (";
                     for (int i = 0; i < n; i++) {
-                        cout<<to_string(time[processid][i]);
+                        temp += to_string(time[processid][i]);
                     }
-                    cout<<")"<<endl; 
+                    temp += ")";
+                    output[processid].push_back(temp);
                     if (buffer[processid].size() > 0) {
 
                         while(buffer[processid].empty() == false){
                             string str = buffer[processid].front();
                             buffer[processid].erase(buffer[processid].begin());
-                            recievetransaction(str, time, transaction, buffer, n, processid);
+                            recievetransaction(str, time, transaction, buffer, n, processid, output);
+                            if(buffer[processid].front() == str){
+                                break;
+                            }
                         }
                     }
                 }else{
@@ -84,42 +90,23 @@ void recievetransaction(string str, vector<vector<int>>& time, vector<vector<mes
     }
 
     if (!found) {
-        cout << "Message not found in transaction" << endl;
+        buffer[processid].push_back(str);
+
     }
     return ;
 }
-int main(){
 
-    int n; //number of process
-    cin>>n;
-    vector<vector<int>> time(n,vector<int>(n, 0));
-    cout<<"Initial Time Matrix"<<endl;
-    for(int i = 0; i < n; i++){
-        for(int j = 0; j < n; j++){
-            cout<<time[i][j]<<" ";
-        }
-        cout<<endl;
-    }
-    
-
-    vector<vector< messages2 >> transaction(n);
-    vector<vector<string>> buffer(n);
-
-
-    string str;
-    int processid = -1;
-    cin.ignore();
-    while(getline(cin,str) && str != "exit"){
-        if (str.find("begin process p") == 0 and str.length() == 16){
+void inputstring(string& str, vector<vector<int>>& time, vector<vector<messages2>>& transaction, vector<vector<string>>& buffer, int n, int& processid, vector<vector<string>>& output){
+    cout<<"Input String "<<str<<endl;
+    if (str.find("begin process p") == 0 and str.length() == 16){
             processid = stoi(str.substr(15)); // Extract the process number
             if (processid < n){
-                cout <<str << endl;
+                output[processid].push_back(str);
             }else{
                 cout << "Invalid process id" << endl;
                 processid = -1;
             }
         }else if(str.compare("end process") == 0 and processid != -1){
-            cout <<str<< endl;
             processid = -1;
             
         }else if(str.substr(0,4) == "send" and processid != -1){
@@ -129,12 +116,12 @@ int main(){
                 str += to_string(time[processid][i]);
             }
             str += ")";
-            string msg = str.substr(5); // Extract "m0"
-            size_t startPos = msg.find(' '); // Find the first space
-            size_t endPos = msg.find(' '); // Find the space before the parenthesis
+            string msg = str.substr(5); 
+            size_t startPos = msg.find(' '); 
+            size_t endPos = msg.find(' '); 
 
             if (startPos != string::npos && endPos != string::npos) {
-                msg = msg.substr(0, endPos); // Extract "m1"
+                msg = msg.substr(0, endPos); 
             }
             vector<bool> msgReceived(n, false);
             msgReceived[processid] = true;
@@ -143,33 +130,60 @@ int main(){
 
             transaction[processid].emplace_back(msg, processid , msgReceived, timeSent);
 
-            cout <<str<< endl;
+            output[processid].push_back(str);
         }else if(str.substr(0,8) == "recv_B p" and processid != -1){
-            recievetransaction(str, time, transaction, buffer, n, processid);
+            recievetransaction(str, time, transaction, buffer, n, processid, output);
         }
         else{
             cout << "Invalid input" << endl;
         }
         str = "";
-    }
-    // for(int i = 0; i < n; i++){
-    //     for(int j = 0; j < transaction[i].size(); j++){
-    //         cout<<transaction[i][j].msg<<" "<<transaction[i][j].sender<<" ";
-    //         cout<<endl;
-    //         for(int k = 0; k < n; k++){
-    //             cout<<transaction[i][j].msgReceived[k]<<" ";
-    //         }
-    //         cout<<endl;
-    //         for(int k = 0; k < n; k++){
-    //             cout<<transaction[i][j].time[k]<<" ";
-    //         }
-    //         cout<<endl;
-    //     }
+}
+int main(){
 
-    // }
+    int n; //number of process
+    cin>>n;
+    vector<vector<int>> time(n,vector<int>(n, 0));
+    cout<<"Initial Time Matrix"<<endl;
+    for(int i = 0; i < n; i++){
+        cout<<"Time for process "<<i<<" -> ";
+        for(int j = 0; j < n; j++){
+            cout<<time[i][j]<<" ";
+        }
+        cout<<endl;
+    }
+    
+
+    vector<vector< messages2 >> transaction(n);
+    vector<vector<string>> buffer(n);
+    vector<vector<string>> output(n);
+
+
+    string str;
+    int processid = -1;
+    cin.ignore();
+    while(getline(cin,str) && str != "exit"){
+        inputstring(str, time, transaction, buffer, n, processid, output);
+    }
+    for(int i = 0; i < n; i++){
+        while(buffer[i].empty() == false){
+            string str = buffer[i].front();
+            buffer[i].erase(buffer[i].begin());
+            recievetransaction(str, time, transaction, buffer, n, i, output);
+        }
+    }
+
+    for(int i = 0; i < n; i++){
+        for(int j = 0; j < output[i].size(); j++){
+            cout<<output[i][j]<<endl;
+        }
+        cout<<"end process"<<endl;
+    }
+
 
     cout<<"Final Time Matrix"<<endl;
     for(int i = 0; i < n; i++){
+        cout<<"Time for process "<<i<<" -> ";
         for(int j = 0; j < n; j++){
             cout<<time[i][j]<<" ";
         }
@@ -178,8 +192,18 @@ int main(){
 
 
 
+    //print buffer 
+    for(int i = 0; i < n; i++){
+        for(int j = 0; j < buffer[i].size(); j++){
+            cout<<"Buffer for process "<<i<<" remaining is ";
+            cout<<buffer[i][j]<<endl;
+        }
+    }
 
-cout<<"hello world"<<endl;
+
+
+
+cout<<"BSS Protocol Completed"<<endl;
 
 
 
