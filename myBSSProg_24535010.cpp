@@ -30,8 +30,7 @@ bool checkBSSRule(const vector<int>& msgTime, const vector<int>& recieverTime, i
 }
 
 void recievetransaction(string str, vector<vector<int>>& time, vector<vector<messages2>>& transaction, vector<vector<string>>& buffer, int n, int& processid, vector<vector<string>>& output){
-    cout<<"Recieved Transaction "<<str<<endl;
-    int recievedFrom = stoi(str.substr(8)); // Extract the process number
+    int recievedFrom = stoi(str.substr(8));
     string msg = str.substr(10,str.size()-1);
     vector<int> recieverTime = time[processid];
 
@@ -69,9 +68,10 @@ void recievetransaction(string str, vector<vector<int>>& time, vector<vector<mes
                     }
                     temp += ")";
                     output[processid].push_back(temp);
+                    int x = buffer[processid].size();
                     if (buffer[processid].size() > 0) {
 
-                        while(buffer[processid].empty() == false){
+                        while(buffer[processid].empty() == false and x--){
                             string str = buffer[processid].front();
                             buffer[processid].erase(buffer[processid].begin());
                             recievetransaction(str, time, transaction, buffer, n, processid, output);
@@ -97,7 +97,6 @@ void recievetransaction(string str, vector<vector<int>>& time, vector<vector<mes
 }
 
 void inputstring(string& str, vector<vector<int>>& time, vector<vector<messages2>>& transaction, vector<vector<string>>& buffer, int n, int& processid, vector<vector<string>>& output){
-    cout<<"Input String "<<str<<endl;
     if (str.find("begin process p") == 0 and str.length() == 16){
             processid = stoi(str.substr(15)); // Extract the process number
             if (processid < n){
@@ -165,10 +164,27 @@ int main(){
     while(getline(cin,str) && str != "exit"){
         inputstring(str, time, transaction, buffer, n, processid, output);
     }
+
+
     for(int i = 0; i < n; i++){
         while(buffer[i].empty() == false){
             string str = buffer[i].front();
             buffer[i].erase(buffer[i].begin());
+            int recievedFrom = stoi(str.substr(8));
+            string msg = str.substr(10,str.size()-1);  
+            bool found = false;
+            for (auto& trans : transaction[recievedFrom]) {
+                if (trans.msg == msg) {
+                    found = true;
+                    break;
+                }
+            }
+            if (!found) {
+                cout<<"Message "<< msg <<" was never sent."<<endl;
+                cout<<"BSS Protocol Terminated"<<endl;
+                return 0;
+                
+            }
             recievetransaction(str, time, transaction, buffer, n, i, output);
         }
     }
@@ -199,10 +215,7 @@ int main(){
             cout<<buffer[i][j]<<endl;
         }
     }
-
-
-
-
+    
 cout<<"BSS Protocol Completed"<<endl;
 
 

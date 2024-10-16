@@ -1,0 +1,10 @@
+3
+begin process p0
+recv_B p1 m1
+send m0
+end process
+begin process p1
+recv_B p0 m0
+send m1
+end process
+exit
