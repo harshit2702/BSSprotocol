@@ -31,13 +31,6 @@ This project simulates the BSS (Byzantine State Synchronization) protocol using 
     ./myBSSProg_24535010 < input.txt
     ```
 
-## Code Overview
-
-- `main()`: The entry point of the program. Initializes the time matrix and processes input commands.
-- `inputstring()`: Parses input strings and updates the state of the simulation.
-- `recievetransaction()`: Handles the reception of messages and updates the buffer and transaction logs.
-- `checkBSSRule()`: Checks the BSS protocol rules to validate message reception.
-
 ## Example Input
 
 3
@@ -82,3 +75,29 @@ Time for process 0 -> 1 1 0
 Time for process 1 -> 1 1 0 
 Time for process 2 -> 1 1 0 
 BSS Protocol Completed
+
+## Code Overview
+
+- `main()`: The entry point of the program. Initializes the time matrix and processes input commands.
+- `inputstring()`: Parses input strings and updates the state of the simulation.
+- `recievetransaction()`: Handles the reception of messages and updates the buffer and transaction logs.
+- `checkBSSRule()`: Checks the BSS protocol rules to validate message reception.
+
+•	Structure message2 — Is used for send message 
+	⁃	it contains the message string
+	⁃	sender id 
+	⁃	boolean array of size n (equal to number of process) to indicate which process has received the message.
+	⁃	time array to indicate the time when the message was sent.
+•	checkBSSRule — used to check wether the message is to be delivered to the application or not.
+•	recievetransaction — it handles receiving transaction. 
+	⁃	it make use of checkBSSRule to make a decision that message is to be delivered to the application or to store in buffer.
+	⁃	when an application is delivered to the application it checks its buffer to see can any other message be also delivered to the application 
+•	inputstring — handles all the input given to the program
+	⁃	it initialise the process and transaction 
+	⁃	also checks for invalid input string
+•	main
+	⁃	initialise number of process (< 9).
+	⁃	initialise the time matrix of n * n to 0.
+	⁃	initialise transaction array that store the transaction in order made by the process
+	⁃	initialise the buffer to store message that are received out of order .
+	⁃	initialise the output to store the result for each transaction 
